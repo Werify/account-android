@@ -1,4 +1,4 @@
-package net.werify.official
+package net.werify.id
 
 import org.junit.Test
 

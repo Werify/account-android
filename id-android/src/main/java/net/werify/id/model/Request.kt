@@ -1,4 +1,4 @@
-package net.werify.official.model
+package net.werify.id.model
 
 import okhttp3.RequestBody
 

@@ -9,6 +9,7 @@ data class OTPRequestResults(
     @SerializedName("id") var id: String = "",
     @SerializedName("created_at") var createdAt: String = ""
 )
+fun OTPRequestResults.toVerifyObject() = VerifyOTP(type, hash, otp, id)
 
 data class OTPVerifyResults(
     @SerializedName("first_name") var firstName: String? = null,

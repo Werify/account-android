@@ -4,6 +4,7 @@ import net.werify.id.model.Request
 import net.werify.id.model.Response
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
+import net.werify.id.model.qr.QrResult
 
 // @ref [https://github.com/Werify/id-ts/blob/main/README.md]
 interface PublicDataSource {
@@ -13,8 +14,8 @@ interface PublicDataSource {
     suspend fun requestOTP(request: Request): Response<OTPRequestResults>
     suspend fun verifyOTP(request: Request): Response<OTPVerifyResults>
 
-    suspend fun getQRSession(): Response<Any>
-    suspend fun checkSession(): Response<Any>
+    suspend fun getQRSession(): Response<QrResult>
+    suspend fun checkSession(hash: String, id: String): Response<Any>
     //endregion
 }
 interface PrivateDataSource {
@@ -25,8 +26,8 @@ interface PrivateDataSource {
     suspend fun getNewModalSession(): Response<Any>
     suspend fun checkUsername(): Response<Any>
 
-    suspend fun claimModalSession(request: Request): Response<Any>
-    suspend fun claimQRSession(request: Request): Response<Any>
+    suspend fun claimModalSession(hash: String, id: String): Response<Any>
+    suspend fun claimQRSession(hash: String, id: String): Response<Any>
     suspend fun updateUserProfile(request: Request): Response<Any>
     suspend fun addMobileNumber(request: Request): Response<Any>
     //endregion

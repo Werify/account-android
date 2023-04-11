@@ -23,7 +23,7 @@ class ConnectionClassManager {
     companion object {
         private var sInstance: ConnectionClassManager? = null
         @JvmStatic
-        public fun getInstance(): ConnectionClassManager {
+        fun getInstance(): ConnectionClassManager {
             if (sInstance == null) {
                 synchronized(ConnectionClassManager::class.java) {
                     if (sInstance == null) {

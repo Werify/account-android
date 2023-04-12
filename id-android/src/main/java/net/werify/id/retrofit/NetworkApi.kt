@@ -100,29 +100,6 @@ interface NetworkApi {
  */
 class RetrofitWerifyNetwork constructor(private val api: NetworkApi) : NetworkDataSource {
 
-    /*  private val TIME_OUT: Long = 120
-      private val gson = GsonBuilder().setLenient().create()
-      private val okHttpClient = OkHttpClient.Builder()
-          .readTimeout(TIME_OUT, TimeUnit.SECONDS)
-          .connectTimeout(TIME_OUT, TimeUnit.SECONDS)
-          .addInterceptor { chain ->
-              val resp = chain.proceed(chain.request())
-              // Deal with the response code
-              if (resp.code == 200) {
-                  try {
-                      val myJson =
-                          resp.peekBody(2048).string() // peekBody() will not close the response
-                      println(myJson)
-                  } catch (e: Exception) {
-                      println("Error parse json from intercept..............")
-                  }
-              } else {
-                  println(resp)
-              }
-              resp
-          }.build()*/
-
-
     override suspend fun login(request: Request) = api.login(request.toRequestBody())
     override suspend fun loginOTP(request: Request) = api.loginOTP(request)
     override suspend fun requestOTP(request: Request) = api.requestOTP(request.toRequestBody())

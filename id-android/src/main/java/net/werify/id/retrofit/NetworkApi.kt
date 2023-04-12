@@ -10,6 +10,7 @@ import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -24,21 +25,27 @@ interface NetworkApi {
     //region  Public Routes ( Doesn't need any credentials or authorization )
 
     //region request user login otp
+    @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/login")// params : identifier
     suspend fun login(@Body request: RequestBody): Response<Any>
 
+    @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/otp")// params : id, hash, otp
     suspend fun loginOTP(@Body request: Request): Response<Any>
 
+    @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/request-otp")// params : identifier
     suspend fun requestOTP(@Body request: RequestBody): Response<OTPRequestResults>
 
+    @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/verify-otp")// params : id, hash, otp
     suspend fun verifyOTP(@Body request: RequestBody): Response<OTPVerifyResults>
 
+    @Headers("No-Authentication: true")
     @GET(value = "$SUFFIX/qr")// params : NOT
     suspend fun getQRSession(): Response<QrResult>
 
+    @Headers("No-Authentication: true")
     @GET(value = "$SUFFIX/session-check/modal/{hash}/{id}")// params : NOT
     suspend fun checkSession(@Path("hash") hash: String, @Path("id") id: String): Response<Any>
 

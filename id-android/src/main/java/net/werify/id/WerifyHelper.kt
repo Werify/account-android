@@ -1,12 +1,13 @@
 package net.werify.id
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.provider.Telephony.Mms.Part.FILENAME
 import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -19,7 +20,6 @@ import net.werify.id.common.ConnectionQuality
 import net.werify.id.common.WConstants
 import net.werify.id.interfaces.ConnectionQualityChangeListener
 import net.werify.id.model.Request
-import net.werify.id.model.Response
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
@@ -32,6 +32,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 
+
 typealias Object = () -> Unit
 
 const val TAG = "WerifyHelper"
@@ -42,7 +43,6 @@ const val TAG = "WerifyHelper"
  * {#code WerifyNetworking.initialize(context , appKey)}.
  */
 object WerifyHelper {
-
 
     @OptIn(DelicateCoroutinesApi::class)
     private val ioContext by lazy { newFixedThreadPoolContext(/*poolSize*/1, "IOContextWrapper") }
@@ -67,6 +67,7 @@ object WerifyHelper {
     fun initialize(context: Context, configure: WerifyConfigure?) {
         if (configure != null) {
             initialize(
+                context,
                 OkHttpClient().newBuilder()
                     .cache(getCache(context, WConstants.MAX_CACHE_SIZE, WConstants.CACHE_DIR_NAME))
                     .connectTimeout(configure.connectTimeout, TimeUnit.SECONDS)
@@ -75,10 +76,10 @@ object WerifyHelper {
                     .build(), configure.url
             )
         } else {
-            initializeWithDefaultClient()
+            initializeWithDefaultClient(context)
         }
-        //        RequestQueue.initialize();
     }
+
 
     /**
      * Method to set connectionQualityChangeListener
@@ -133,17 +134,14 @@ object WerifyHelper {
     }
 
 
-
     //region  ( Doesn't need any credentials or authorization )
-    fun login(request: Request,callback: RequestCallback<Any>){
+    fun login(request: Request, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.login(request)
                 .catch { callback.onError(it) }
-                .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
-                }.flowOn(ioContext)
+                .onCompletion {}.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "login collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -152,15 +150,15 @@ object WerifyHelper {
                 }
         }
     }
-    fun loginOTP(request: Request,callback: RequestCallback<Any>) {
+
+    fun loginOTP(request: Request, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.loginOTP(request)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "loginOTP collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -169,15 +167,15 @@ object WerifyHelper {
                 }
         }
     }
+
     fun requestOTP(request: Request, callback: RequestCallback<OTPRequestResults>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.requestOTP(request)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "requestOTP collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -186,32 +184,35 @@ object WerifyHelper {
                 }
         }
     }
-    fun verifyOTP(request: Request ,callback: RequestCallback<OTPVerifyResults>){
+
+    fun verifyOTP(request: Request, callback: RequestCallback<OTPVerifyResults>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.verifyOTP(request)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "verifyOTP collect  $it")
                     if (it.succeed) {
-                        callback.onSuccess(it.results!!)
+                        it.results?.also { results ->
+                            NetworkModule.cacheAccessToken(results.tokenType, results.accessToken)
+                            callback.onSuccess(results)
+                        } ?: callback.onError(Throwable("Result Object Is Null."))
                     } else {
                         callback.onError(Throwable(it.message))
                     }
                 }
         }
     }
-    fun getQRSession(callback: RequestCallback<QrResult>){
+
+    fun getQRSession(callback: RequestCallback<QrResult>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.getQRSession()
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "getQRSession collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -220,15 +221,15 @@ object WerifyHelper {
                 }
         }
     }
-    fun checkSession(hash: String, id: String,callback: RequestCallback<Any>){
+
+    fun checkSession(hash: String, id: String, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.checkSession(hash, id)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "checkSession collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -241,83 +242,14 @@ object WerifyHelper {
 
     //region  ( Needs token in request header )
 
-    fun getUserProfile(callback: RequestCallback<Any>){
+    fun getUserProfile(callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.getUserProfile()
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
-                    if (it.succeed) {
-                        callback.onSuccess(it.results!!)
-                    } else {
-                        callback.onError(Throwable(it.message))
-                    }
-                }
-        }
-    }
-    fun getUserNumbers(callback: RequestCallback<Any>){
-        CoroutineScope(Dispatchers.Main).launch {
-            NetworkModule.getUserNumbers()
-                .catch { callback.onError(it) }
-                .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
-                }.flowOn(ioContext)
-                .collect {
-                    Log.e(TAG, "collect  $it")
-                    if (it.succeed) {
-                        callback.onSuccess(it.results!!)
-                    } else {
-                        callback.onError(Throwable(it.message))
-                    }
-                }
-        }
-    }
-    fun getFinancialInfo(callback: RequestCallback<Any>){
-        CoroutineScope(Dispatchers.Main).launch {
-            NetworkModule.getFinancialInfo()
-                .catch { callback.onError(it) }
-                .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
-                }.flowOn(ioContext)
-                .collect {
-                    Log.e(TAG, "collect  $it")
-                    if (it.succeed) {
-                        callback.onSuccess(it.results!!)
-                    } else {
-                        callback.onError(Throwable(it.message))
-                    }
-                }
-        }
-    }
-    fun getNewModalSession(callback: RequestCallback<Any>){
-        CoroutineScope(Dispatchers.Main).launch {
-            NetworkModule.getNewModalSession()
-                .catch { callback.onError(it) }
-                .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
-                }.flowOn(ioContext)
-                .collect {
-                    Log.e(TAG, "collect  $it")
-                    if (it.succeed) {
-                        callback.onSuccess(it.results!!)
-                    } else {
-                        callback.onError(Throwable(it.message))
-                    }
-                }
-        }
-    }
-    fun checkUsername(callback: RequestCallback<Any>){
-        CoroutineScope(Dispatchers.Main).launch {
-            NetworkModule.checkUsername()
-                .catch { callback.onError(it) }
-                .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
-                }.flowOn(ioContext)
-                .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "getUserProfile collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -327,15 +259,85 @@ object WerifyHelper {
         }
     }
 
-    fun claimModalSession(hash: String, id: String,callback: RequestCallback<Any>){
+    fun getUserNumbers(callback: RequestCallback<Any>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            NetworkModule.getUserNumbers()
+                .catch {
+                    callback.onError(it)
+                    Log.e(TAG, "getUserNumbers  onError $it")
+                }
+                .onCompletion {
+                }.flowOn(ioContext)
+                .collect {
+                    Log.e(TAG, "getUserNumbers collect  $it")
+                    if (it.succeed) {
+                        callback.onSuccess(it.results!!)
+                    } else {
+                        callback.onError(Throwable(it.message))
+                    }
+                }
+        }
+    }
+
+    fun getFinancialInfo(callback: RequestCallback<Any>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            NetworkModule.getFinancialInfo()
+                .catch { callback.onError(it) }
+                .onCompletion {
+                }.flowOn(ioContext)
+                .collect {
+                    Log.e(TAG, "getFinancialInfo collect  $it")
+                    if (it.succeed) {
+                        callback.onSuccess(it.results!!)
+                    } else {
+                        callback.onError(Throwable(it.message))
+                    }
+                }
+        }
+    }
+
+    fun getNewModalSession(callback: RequestCallback<Any>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            NetworkModule.getNewModalSession()
+                .catch { callback.onError(it) }
+                .onCompletion {
+                }.flowOn(ioContext)
+                .collect {
+                    Log.e(TAG, "getNewModalSession collect  $it")
+                    if (it.succeed) {
+                        callback.onSuccess(it.results!!)
+                    } else {
+                        callback.onError(Throwable(it.message))
+                    }
+                }
+        }
+    }
+
+    fun checkUsername(callback: RequestCallback<Any>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            NetworkModule.checkUsername()
+                .catch { callback.onError(it) }
+                .onCompletion {
+                }.flowOn(ioContext)
+                .collect {
+                    Log.e(TAG, "checkUsername collect  $it")
+                    if (it.succeed) {
+                        callback.onSuccess(it.results!!)
+                    } else {
+                        callback.onError(Throwable(it.message))
+                    }
+                }
+        }
+    }
+
+    fun claimModalSession(hash: String, id: String, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.claimModalSession(hash, id)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "claimModalSession collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -344,15 +346,17 @@ object WerifyHelper {
                 }
         }
     }
-    fun claimQRSession(hash: String, id: String,callback: RequestCallback<Any>){
+
+    fun claimQRSession(hash: String, id: String, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.claimQRSession(hash, id)
-                .catch { callback.onError(it) }
+                .catch { callback.onError(it)
+                    Log.e(TAG, "claimQRSession  $it")
+                }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "claimQRSession collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -361,15 +365,15 @@ object WerifyHelper {
                 }
         }
     }
-    fun updateUserProfile(request: Request,callback: RequestCallback<Any>){
+
+    fun updateUserProfile(request: Request, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.updateUserProfile(request)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "updateUserProfile collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {
@@ -378,15 +382,15 @@ object WerifyHelper {
                 }
         }
     }
-    fun addMobileNumber(request: Request,callback: RequestCallback<Any>){
+
+    fun addMobileNumber(request: Request, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.addMobileNumber(request)
                 .catch { callback.onError(it) }
                 .onCompletion {
-                    Log.e(TAG, "onCompletion  ${it?.printStackTrace()}")
                 }.flowOn(ioContext)
                 .collect {
-                    Log.e(TAG, "collect  $it")
+                    Log.e(TAG, "addMobileNumber collect  $it")
                     if (it.succeed) {
                         callback.onSuccess(it.results!!)
                     } else {

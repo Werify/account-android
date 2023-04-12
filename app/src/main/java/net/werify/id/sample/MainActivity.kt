@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         binding.content.apiResult.movementMethod = ScrollingMovementMethod()
 
         binding.fab.setOnClickListener {
+            binding.content.apiResult.text = ""
             requestOTP(RequestOTP("mamad@mamad.com"))
         }
     }
@@ -44,10 +45,30 @@ class MainActivity : AppCompatActivity() {
         WerifyHelper.checkSession(hash, id,
             object : RequestCallback<Any> {
                 override fun onError(throwable: Throwable) {
-                        print("4- checkSession: $throwable\n")
+                        print("4- checkSession: ${throwable.message}\n")
                 }
                 override fun onSuccess(result: Any) {
                     print("4- checkSession: onSuccess\n")
+                }
+            })
+
+        WerifyHelper.claimModalSession(hash, id,
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("7- claimModalSession: ${throwable.message}\n")
+                }
+                override fun onSuccess(result: Any) {
+                    print("7- claimModalSession: onSuccess\n")
+                }
+            })
+
+        WerifyHelper.claimQRSession(hash, id,
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("8- claimQRSession: ${throwable.message}\n")
+                }
+                override fun onSuccess(result: Any) {
+                    print("8- claimQRSession: onSuccess\n")
                 }
             })
     }
@@ -55,25 +76,81 @@ class MainActivity : AppCompatActivity() {
         WerifyHelper.getQRSession(
             object : RequestCallback<QrResult> {
                 override fun onError(throwable: Throwable) {
-                    print("3- getQRSession: $throwable\n")
+                    print("3- getQRSession: ${throwable.message}\n")
                 }
 
                 override fun onSuccess(result: QrResult) {
                     print("3- getQRSession: onSuccess\n")
-
-                    Glide.with(this@MainActivity)
+                  /*  Glide.with(this@MainActivity)
                         .asBitmap()
                         .load(result.url)
-                        .into(binding.content.userQr)
+                        .into(binding.content.userQr)*/
                     checkSession(result.hash, result.id)
                 }
             })
+
+        WerifyHelper.getUserProfile(
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("9- getUserProfile: ${throwable.message}\n")
+                }
+
+                override fun onSuccess(result: Any) {
+                    print("9- getUserProfile: onSuccess\n")
+                }
+            })
+
+
+        WerifyHelper.getUserNumbers(
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("10- getUserNumbers: ${throwable.message}\n")
+                }
+
+                override fun onSuccess(result: Any) {
+                    print("10- getUserNumbers: onSuccess\n")
+                }
+            })
+
+        WerifyHelper.getFinancialInfo(
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("11- getFinancialInfo: ${throwable.message}\n")
+                }
+
+                override fun onSuccess(result: Any) {
+                    print("11- getFinancialInfo: onSuccess\n")
+                }
+            })
+
+        WerifyHelper.getNewModalSession(
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("12- getNewModalSession: ${throwable.message}\n")
+                }
+
+                override fun onSuccess(result: Any) {
+                    print("12- getNewModalSession: onSuccess\n")
+                }
+            })
+
+        WerifyHelper.checkUsername(
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("13- checkUsername: ${throwable.message}\n")
+                }
+
+                override fun onSuccess(result: Any) {
+                    print("13- checkUsername: onSuccess\n")
+                }
+            })
+
     }
     private fun verifyOTP(r: VerifyOTP) {
         WerifyHelper.verifyOTP(r,
             object : RequestCallback<OTPVerifyResults> {
                 override fun onError(throwable: Throwable) {
-                    print("2- verifyOTP: $throwable\n")
+                    print("2- verifyOTP: ${throwable.message}\n")
                 }
                 override fun onSuccess(result: OTPVerifyResults) {
                     print("2- verifyOTP: onSuccess\n")
@@ -85,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         WerifyHelper.requestOTP(r,
             object : RequestCallback<OTPRequestResults> {
                 override fun onError(throwable: Throwable) {
-                    print("1- requestOTP: $throwable\n")
+                    print("1- requestOTP: ${throwable.message}\n")
                 }
                 override fun onSuccess(result: OTPRequestResults) {
                     print("1- requestOTP: onSuccess\n")
@@ -96,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         WerifyHelper.login(r,
             object : RequestCallback<Any> {
                 override fun onError(throwable: Throwable) {
-                    print("5-login: $throwable\n")
+                    print("5-login: ${throwable.message}\n")
                 }
                 override fun onSuccess(result: Any) {
                     print("5- login: onSuccess\n")
@@ -106,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         WerifyHelper.loginOTP(r,
             object : RequestCallback<Any> {
                 override fun onError(throwable: Throwable) {
-                    print("6-loginOTP: $throwable\n")
+                    print("6-loginOTP: ${throwable.message}\n")
                 }
                 override fun onSuccess(result: Any) {
                     print("6- loginOTP: onSuccess\n")

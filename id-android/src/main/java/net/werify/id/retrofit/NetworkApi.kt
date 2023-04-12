@@ -1,12 +1,17 @@
 package net.werify.id.retrofit
 
+import android.util.Log
 import net.werify.id.NetworkDataSource
+import net.werify.id.TAG
 import net.werify.id.model.Request
 import net.werify.id.model.Response
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
+import net.werify.id.model.user.FinancialResult
+import net.werify.id.utils.Utils
 import okhttp3.RequestBody
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -14,6 +19,11 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Streaming
+import java.io.BufferedInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 
 private const val SUFFIX = "api/v1"
@@ -58,19 +68,20 @@ interface NetworkApi {
     suspend fun getUserProfile(): Response<Any>
 
     @GET(value = "$SUFFIX/user/profile/mobile-numbers")// params : NOT
-    suspend fun getUserNumbers(): Response<Any>
+    suspend fun getUserNumbers(): Response<FinancialResult>
 
-    @GET(value = "$SUFFIX/user/financial-information")// params : NOT
-    suspend fun getFinancialInfo(): Response<Any>
+    @GET(value = "$SUFFIX/user/profile/financial-information")// params : NOT
+    suspend fun getFinancialInfo(): Response<FinancialResult>
 
     @GET(value = "$SUFFIX/user/modal")// params : NOT
-    suspend fun getNewModalSession(): Response<Any>
+    suspend fun getNewModalSession(): Response<FinancialResult>
 
     @GET(value = "$SUFFIX/user/modal/{hash}/{id}")// params : NOT
     suspend fun claimModalSession(@Path("hash") hash: String, @Path("id") id: String): Response<Any>
 
-    @GET(value = "$SUFFIX/qr/{hash}/{id}")// params : NOT
-    suspend fun claimQRSession(@Path("hash") hash: String, @Path("id") id: String): Response<Any>
+    @GET(value = "$SUFFIX/qr/{hash}/{id}")// params : NOT return svg file
+    @Streaming
+    suspend fun claimQRSession(@Path("hash") hash: String, @Path("id") id: String): Call<Any>
 
     @PUT(value = "$SUFFIX/user/profile")// params : form data
     suspend fun updateUserProfile(@Body request: RequestBody): Response<Any>
@@ -126,7 +137,19 @@ class RetrofitWerifyNetwork constructor(private val api: NetworkApi) : NetworkDa
     override suspend fun claimModalSession(hash: String, id: String) =
         api.claimModalSession(hash, id)
 
-    override suspend fun claimQRSession(hash: String, id: String) = api.claimQRSession(hash, id)
+    override suspend fun claimQRSession(hash: String, id: String): String {
+        val request = okhttp3.Request.Builder()
+            .url("${NetworkModule.url}$SUFFIX/qr/$hash/$id")
+            .build()
+        val response = NetworkModule.getClient().newCall(request).execute()
+
+        var filePath = ""
+        response.body?.run {
+            filePath = NetworkModule.saveToCache("QR.svg", byteStream())
+        }
+        return filePath
+    }
+
     override suspend fun updateUserProfile(request: Request) =
         api.updateUserProfile(request.toRequestBody())
 

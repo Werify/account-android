@@ -1,7 +1,7 @@
 package net.werify.id.common
 
 object WConstants {
-    const val MAX_CACHE_SIZE = 10 * 1024 * 1024
+    const val MAX_CACHE_SIZE = 100 * 1024 * 1024
     const val UPDATE = 0x01
     const val CACHE_DIR_NAME = "cache_an"
     const val CONNECTION_ERROR = "connectionError"

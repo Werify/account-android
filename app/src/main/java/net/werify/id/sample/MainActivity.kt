@@ -1,16 +1,12 @@
 package net.werify.id.sample
 
-import android.net.Uri
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import android.view.Menu
 import android.view.MenuItem
-import com.bumptech.glide.Glide
 import net.werify.id.RequestCallback
-import net.werify.id.TAG
 import net.werify.id.WerifyHelper
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
@@ -18,6 +14,7 @@ import net.werify.id.model.otp.RequestOTP
 import net.werify.id.model.otp.VerifyOTP
 import net.werify.id.model.otp.toVerifyObject
 import net.werify.id.model.qr.QrResult
+import net.werify.id.model.user.FinancialResult
 import net.werify.id.sample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -63,12 +60,12 @@ class MainActivity : AppCompatActivity() {
             })
 
         WerifyHelper.claimQRSession(hash, id,
-            object : RequestCallback<Any> {
+            object : RequestCallback<String> {
                 override fun onError(throwable: Throwable) {
                     print("8- claimQRSession: ${throwable.message}\n")
                 }
-                override fun onSuccess(result: Any) {
-                    print("8- claimQRSession: onSuccess\n")
+                override fun onSuccess(result: String) {
+                    print("8- claimQRSession: onSuccess $result\n")
                 }
             })
     }
@@ -102,34 +99,34 @@ class MainActivity : AppCompatActivity() {
 
 
         WerifyHelper.getUserNumbers(
-            object : RequestCallback<Any> {
+            object : RequestCallback<FinancialResult> {
                 override fun onError(throwable: Throwable) {
                     print("10- getUserNumbers: ${throwable.message}\n")
                 }
 
-                override fun onSuccess(result: Any) {
+                override fun onSuccess(result: FinancialResult) {
                     print("10- getUserNumbers: onSuccess\n")
                 }
             })
 
         WerifyHelper.getFinancialInfo(
-            object : RequestCallback<Any> {
+            object : RequestCallback<FinancialResult> {
                 override fun onError(throwable: Throwable) {
                     print("11- getFinancialInfo: ${throwable.message}\n")
                 }
 
-                override fun onSuccess(result: Any) {
+                override fun onSuccess(result: FinancialResult) {
                     print("11- getFinancialInfo: onSuccess\n")
                 }
             })
 
         WerifyHelper.getNewModalSession(
-            object : RequestCallback<Any> {
+            object : RequestCallback<FinancialResult> {
                 override fun onError(throwable: Throwable) {
                     print("12- getNewModalSession: ${throwable.message}\n")
                 }
 
-                override fun onSuccess(result: Any) {
+                override fun onSuccess(result: FinancialResult) {
                     print("12- getNewModalSession: onSuccess\n")
                 }
             })

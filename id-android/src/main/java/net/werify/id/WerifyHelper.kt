@@ -1,8 +1,6 @@
 package net.werify.id
 
 import android.content.Context
-import android.content.SharedPreferences
-import android.provider.Telephony.Mms.Part.FILENAME
 import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +21,7 @@ import net.werify.id.model.Request
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
+import net.werify.id.model.user.FinancialResult
 import net.werify.id.retrofit.NetworkModule
 import net.werify.id.retrofit.NetworkModule.initialize
 import net.werify.id.retrofit.NetworkModule.initializeWithDefaultClient
@@ -69,11 +68,10 @@ object WerifyHelper {
             initialize(
                 context,
                 OkHttpClient().newBuilder()
-                    .cache(getCache(context, WConstants.MAX_CACHE_SIZE, WConstants.CACHE_DIR_NAME))
                     .connectTimeout(configure.connectTimeout, TimeUnit.SECONDS)
                     .readTimeout(configure.readTimeout, TimeUnit.SECONDS)
                     .writeTimeout(configure.writeTimeout, TimeUnit.SECONDS)
-                    .build(), configure.url
+                    , configure.url
             )
         } else {
             initializeWithDefaultClient(context)
@@ -259,7 +257,7 @@ object WerifyHelper {
         }
     }
 
-    fun getUserNumbers(callback: RequestCallback<Any>) {
+    fun getUserNumbers(callback: RequestCallback<FinancialResult>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.getUserNumbers()
                 .catch {
@@ -279,7 +277,7 @@ object WerifyHelper {
         }
     }
 
-    fun getFinancialInfo(callback: RequestCallback<Any>) {
+    fun getFinancialInfo(callback: RequestCallback<FinancialResult>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.getFinancialInfo()
                 .catch { callback.onError(it) }
@@ -296,7 +294,7 @@ object WerifyHelper {
         }
     }
 
-    fun getNewModalSession(callback: RequestCallback<Any>) {
+    fun getNewModalSession(callback: RequestCallback<FinancialResult>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.getNewModalSession()
                 .catch { callback.onError(it) }
@@ -347,21 +345,18 @@ object WerifyHelper {
         }
     }
 
-    fun claimQRSession(hash: String, id: String, callback: RequestCallback<Any>) {
+    fun claimQRSession(hash: String, id: String, callback: RequestCallback<String>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.claimQRSession(hash, id)
-                .catch { callback.onError(it)
+                .catch {
+                    callback.onError(it)
                     Log.e(TAG, "claimQRSession  $it")
                 }
                 .onCompletion {
                 }.flowOn(ioContext)
                 .collect {
                     Log.e(TAG, "claimQRSession collect  $it")
-                    if (it.succeed) {
-                        callback.onSuccess(it.results!!)
-                    } else {
-                        callback.onError(Throwable(it.message))
-                    }
+                    callback.onSuccess(it)
                 }
         }
     }

@@ -16,8 +16,9 @@ class OAuthInterceptor(
             val tokenType: String? = preferences.getString(TOKEN_TYPE, "")
             val accessToken: String? = preferences.getString(TOKEN, "")
             request =  request.newBuilder().header("Authorization", "$tokenType $accessToken").build()
-            Log.e(TAG , "OAuthInterceptor ${request.url} ,${request.headers}")
         }
+        Log.e(TAG , "OAuthInterceptor ${request.url},${request.body},${request.headers}")
+
         return chain.proceed(request)
     }
 }

@@ -2,19 +2,31 @@ package net.werify.id.retrofit
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
+import com.google.gson.GsonBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import net.werify.id.NetworkDataSource
+import net.werify.id.TAG
+import net.werify.id.common.WConstants
 import net.werify.id.model.Request
 import net.werify.id.model.Response
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
+import net.werify.id.model.user.FinancialResult
+import net.werify.id.utils.Utils
 import net.werify.official.BuildConfig
+import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 
 const val TOKEN = "token"
@@ -26,23 +38,51 @@ object NetworkModule {
     private var sUserAgent: String? = null
     private lateinit var sNetworkDataSource: NetworkDataSource
     private lateinit var mPreferences: SharedPreferences
+    var url: String = ""
+    private lateinit var cache: Cache
 
-    private fun createDataSource(api: NetworkApi, ctx: Context) {
+    private fun createDataSource(api: NetworkApi) {
         sNetworkDataSource = RetrofitWerifyNetwork(api)
     }
 
-    fun initialize(ctx: Context, client: OkHttpClient, url: String = BuildConfig.BACKEND_URL) {
-        mPreferences = ctx.getSharedPreferences("W-INFO", Context.MODE_PRIVATE)
+    fun saveToCache(name: String, inStream: InputStream) : String{
+        val input = BufferedInputStream(inStream)
+        val file = File(cache.directory,name)
+        val output: OutputStream = FileOutputStream(file)
+        val data = ByteArray(1024)
+        var total: Long = 0
+        var count = 0
+        while (input.read(data).also { count = it } != -1) {
+            total += count
+            output.write(data, 0, count)
+        }
+        output.flush()
+        Log.e(TAG, "Saved $name Is Don. ${file.absolutePath}")
+        output.close()
+        input.close()
 
-        val api = provideRetrofit(client, url).create(NetworkApi::class.java)
-        createDataSource(api, ctx)
+        return "${cache.directory.absolutePath}/$name"
+    }
+
+    fun initialize(
+        ctx: Context,
+        clientBuilder: OkHttpClient.Builder,
+        url: String = BuildConfig.BACKEND_URL
+    ) {
+        mPreferences = ctx.getSharedPreferences("W-INFO", Context.MODE_PRIVATE)
+        cache = Utils.getCache(ctx, WConstants.MAX_CACHE_SIZE, WConstants.CACHE_DIR_NAME)
+        cache.initialize()
+
+        val api =
+            provideRetrofit(clientBuilder.cache(cache).build(), url).create(NetworkApi::class.java)
+        createDataSource(api)
     }
 
     fun initializeWithDefaultClient(ctx: Context) {
         mPreferences = ctx.getSharedPreferences("W-INFO", Context.MODE_PRIVATE)
-
+        cache = Utils.getCache(ctx, WConstants.MAX_CACHE_SIZE, WConstants.CACHE_DIR_NAME)
         val api = provideRetrofit().create(NetworkApi::class.java)
-        createDataSource(api, ctx)
+        createDataSource(api)
     }
 
     private
@@ -53,6 +93,7 @@ object NetworkModule {
 
         return OkHttpClient
             .Builder()
+            .cache(cache)
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -86,17 +127,28 @@ object NetworkModule {
     private fun provideRetrofit(
         client: OkHttpClient = getDefaultClient(),
         url: String = BuildConfig.BACKEND_URL
-    ): Retrofit = Retrofit.Builder()
-        .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(url)
-        .client(client)
-        .build()
+    ): Retrofit {
+        NetworkModule.url = url
+        return Retrofit.Builder()
+            .addConverterFactory(
+                GsonConverterFactory.create(
+                    GsonBuilder()
+                        .setLenient()
+                        .serializeNulls()
+                        .setPrettyPrinting()
+                        .create()
+                )
+            )
+            .baseUrl(url)
+            .client(client)
+            .build()
+    }
 
     fun cacheAccessToken(type: String?, token: String?) {
-        if (::mPreferences.isInitialized){
+        if (::mPreferences.isInitialized) {
             val editor = mPreferences.edit()
-            editor.putString(TOKEN_TYPE , type)
-            editor.putString(TOKEN,token)
+            editor.putString(TOKEN_TYPE, type)
+            editor.putString(TOKEN, token)
             editor.apply()
         }
     }
@@ -122,11 +174,13 @@ object NetworkModule {
     //region  ( Needs token in request header )
 
     fun getUserProfile(): Flow<Response<Any>> = flow { emit(sNetworkDataSource.getUserProfile()) }
-    fun getUserNumbers(): Flow<Response<Any>> = flow { emit(sNetworkDataSource.getUserNumbers()) }
-    fun getFinancialInfo(): Flow<Response<Any>> =
+    fun getUserNumbers(): Flow<Response<FinancialResult>> =
+        flow { emit(sNetworkDataSource.getUserNumbers()) }
+
+    fun getFinancialInfo(): Flow<Response<FinancialResult>> =
         flow { emit(sNetworkDataSource.getFinancialInfo()) }
 
-    fun getNewModalSession(): Flow<Response<Any>> =
+    fun getNewModalSession(): Flow<Response<FinancialResult>> =
         flow { emit(sNetworkDataSource.getNewModalSession()) }
 
     fun checkUsername(): Flow<Response<Any>> = flow { emit(sNetworkDataSource.checkUsername()) }
@@ -134,7 +188,7 @@ object NetworkModule {
     fun claimModalSession(hash: String, id: String): Flow<Response<Any>> =
         flow { emit(sNetworkDataSource.claimModalSession(hash, id)) }
 
-    fun claimQRSession(hash: String, id: String): Flow<Response<Any>> =
+    fun claimQRSession(hash: String, id: String): Flow<String> =
         flow { emit(sNetworkDataSource.claimQRSession(hash, id)) }
 
     fun updateUserProfile(request: Request): Flow<Response<Any>> =

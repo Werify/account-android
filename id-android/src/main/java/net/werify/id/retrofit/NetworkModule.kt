@@ -15,6 +15,8 @@ import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
 import net.werify.id.model.user.FinancialResult
+import net.werify.id.model.user.Profile
+import net.werify.id.model.user.UserInfo
 import net.werify.id.utils.Utils
 import net.werify.official.BuildConfig
 import okhttp3.Cache
@@ -71,10 +73,12 @@ object NetworkModule {
     ) {
         mPreferences = ctx.getSharedPreferences("W-INFO", Context.MODE_PRIVATE)
         cache = Utils.getCache(ctx, WConstants.MAX_CACHE_SIZE, WConstants.CACHE_DIR_NAME)
-        cache.initialize()
+        val interceptor = HttpLoggingInterceptor()
+        interceptor.setLevel(if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE)
 
         val api =
-            provideRetrofit(clientBuilder.cache(cache).build(), url).create(NetworkApi::class.java)
+            provideRetrofit(clientBuilder.cache(cache).addInterceptor(interceptor)
+                .addInterceptor(OAuthInterceptor(mPreferences)).build(), url).create(NetworkApi::class.java)
         createDataSource(api)
     }
 
@@ -173,7 +177,7 @@ object NetworkModule {
 
     //region  ( Needs token in request header )
 
-    fun getUserProfile(): Flow<Response<Any>> = flow { emit(sNetworkDataSource.getUserProfile()) }
+    fun getUserProfile(): Flow<Response<UserInfo>> = flow { emit(sNetworkDataSource.getUserProfile()) }
     fun getUserNumbers(): Flow<Response<FinancialResult>> =
         flow { emit(sNetworkDataSource.getUserNumbers()) }
 
@@ -191,8 +195,10 @@ object NetworkModule {
     fun claimQRSession(hash: String, id: String): Flow<String> =
         flow { emit(sNetworkDataSource.claimQRSession(hash, id)) }
 
-    fun updateUserProfile(request: Request): Flow<Response<Any>> =
+    fun updateUserProfile(request: Profile): Flow<Response<Any>> =
         flow { emit(sNetworkDataSource.updateUserProfile(request)) }
+    fun updateFinancialInfo(request: Profile): Flow<Response<Any>> =
+        flow { emit(sNetworkDataSource.updateFinancialInfo(request)) }
 
     fun addMobileNumber(request: Request): Flow<Response<Any>> =
         flow { emit(sNetworkDataSource.addMobileNumber(request)) }

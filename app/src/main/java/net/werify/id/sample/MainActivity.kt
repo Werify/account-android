@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import net.werify.id.RequestCallback
 import net.werify.id.WerifyHelper
 import net.werify.id.model.otp.OTPRequestResults
@@ -15,6 +16,9 @@ import net.werify.id.model.otp.VerifyOTP
 import net.werify.id.model.otp.toVerifyObject
 import net.werify.id.model.qr.QrResult
 import net.werify.id.model.user.FinancialResult
+import net.werify.id.model.user.Profile
+import net.werify.id.model.user.UserInfo
+import net.werify.id.model.user.UserNumberRequest
 import net.werify.id.sample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -33,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         binding.content.apiResult.movementMethod = ScrollingMovementMethod()
 
         binding.fab.setOnClickListener {
+            binding.content.progressBar.visibility = View.VISIBLE
             binding.content.apiResult.text = ""
             requestOTP(RequestOTP("mamad@mamad.com"))
         }
@@ -66,37 +71,60 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun onSuccess(result: String) {
                     print("8- claimQRSession: onSuccess $result\n")
+                    binding.content.progressBar.visibility = View.GONE
                 }
             })
+
+        val profile = Profile("Ali","ahmadi","Ahmadi")
+       try {
+           WerifyHelper.updateFinancialInfo(profile,
+               object : RequestCallback<Any> {
+                   override fun onError(throwable: Throwable) {
+                       print("14- updateFinancialInfo: ${throwable.message}\n")
+                   }
+                   override fun onSuccess(result: Any) {
+                       print("14- updateFinancialInfo: onSuccess $result\n")
+                       binding.content.progressBar.visibility = View.GONE
+                   }
+               })
+       }finally {
+           WerifyHelper.updateUserProfile(profile,
+               object : RequestCallback<Any> {
+                   override fun onError(throwable: Throwable) {
+                       print("15- updateUserProfile: ${throwable.message}\n")
+                   }
+                   override fun onSuccess(result: Any) {
+                       print("15- updateUserProfile: onSuccess $result\n")
+                       binding.content.progressBar.visibility = View.GONE
+                   }
+               })
+       }
+
+        WerifyHelper.addMobileNumber(
+            UserNumberRequest("0912456789"),
+            object : RequestCallback<Any> {
+                override fun onError(throwable: Throwable) {
+                    print("15- addMobileNumber: ${throwable.message}\n")
+                }
+                override fun onSuccess(result: Any) {
+                    print("15- addMobileNumber: onSuccess $result\n")
+                    binding.content.progressBar.visibility = View.GONE
+                }
+            })
+
     }
     private fun getQRSession() {
-        WerifyHelper.getQRSession(
-            object : RequestCallback<QrResult> {
-                override fun onError(throwable: Throwable) {
-                    print("3- getQRSession: ${throwable.message}\n")
-                }
-
-                override fun onSuccess(result: QrResult) {
-                    print("3- getQRSession: onSuccess\n")
-                  /*  Glide.with(this@MainActivity)
-                        .asBitmap()
-                        .load(result.url)
-                        .into(binding.content.userQr)*/
-                    checkSession(result.hash, result.id)
-                }
-            })
 
         WerifyHelper.getUserProfile(
-            object : RequestCallback<Any> {
+            object : RequestCallback<UserInfo> {
                 override fun onError(throwable: Throwable) {
                     print("9- getUserProfile: ${throwable.message}\n")
                 }
 
-                override fun onSuccess(result: Any) {
+                override fun onSuccess(result: UserInfo) {
                     print("9- getUserProfile: onSuccess\n")
                 }
             })
-
 
         WerifyHelper.getUserNumbers(
             object : RequestCallback<FinancialResult> {
@@ -141,7 +169,21 @@ class MainActivity : AppCompatActivity() {
                     print("13- checkUsername: onSuccess\n")
                 }
             })
+        WerifyHelper.getQRSession(
+            object : RequestCallback<QrResult> {
+                override fun onError(throwable: Throwable) {
+                    print("3- getQRSession: ${throwable.message}\n")
+                }
 
+                override fun onSuccess(result: QrResult) {
+                    print("3- getQRSession: onSuccess\n")
+                    /*  Glide.with(this@MainActivity)
+                          .asBitmap()
+                          .load(result.url)
+                          .into(binding.content.userQr)*/
+                    checkSession(result.hash, result.id)
+                }
+            })
     }
     private fun verifyOTP(r: VerifyOTP) {
         WerifyHelper.verifyOTP(r,
@@ -154,6 +196,7 @@ class MainActivity : AppCompatActivity() {
                     getQRSession()
                 }
             })
+
     }
     private fun requestOTP(r: RequestOTP) {
         WerifyHelper.requestOTP(r,

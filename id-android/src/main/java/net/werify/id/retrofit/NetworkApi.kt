@@ -9,6 +9,8 @@ import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
 import net.werify.id.model.user.FinancialResult
+import net.werify.id.model.user.Profile
+import net.werify.id.model.user.UserInfo
 import net.werify.id.utils.Utils
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -65,7 +67,7 @@ interface NetworkApi {
 
     //region  Private Routes ( Needs token in request header )
     @GET(value = "$SUFFIX/user/profile")// params : NOT
-    suspend fun getUserProfile(): Response<Any>
+    suspend fun getUserProfile(): Response<UserInfo>
 
     @GET(value = "$SUFFIX/user/profile/mobile-numbers")// params : NOT
     suspend fun getUserNumbers(): Response<FinancialResult>
@@ -84,8 +86,9 @@ interface NetworkApi {
     suspend fun claimQRSession(@Path("hash") hash: String, @Path("id") id: String): Call<Any>
 
     @PUT(value = "$SUFFIX/user/profile")// params : form data
-    suspend fun updateUserProfile(@Body request: RequestBody): Response<Any>
-
+    suspend fun updateUserProfile(@Body request: Profile): Response<Any>
+    @PUT(value = "$SUFFIX/user/profile/financial-information")// params : form data
+    suspend fun updateFinancialInfo(@Body request: Profile): Response<Any>
     @POST(value = "$SUFFIX/user/mobile-numbers")// params : mobile_number
     suspend fun addMobileNumber(@Body request: RequestBody): Response<Any>
 
@@ -127,8 +130,11 @@ class RetrofitWerifyNetwork constructor(private val api: NetworkApi) : NetworkDa
         return filePath
     }
 
-    override suspend fun updateUserProfile(request: Request) =
-        api.updateUserProfile(request.toRequestBody())
+    override suspend fun updateUserProfile(request: Profile) =
+        api.updateUserProfile(request)
+
+    override suspend fun updateFinancialInfo(request: Profile) =
+        api.updateFinancialInfo(request)
 
     override suspend fun addMobileNumber(request: Request) =
         api.addMobileNumber(request.toRequestBody())

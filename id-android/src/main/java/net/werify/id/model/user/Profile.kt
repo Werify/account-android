@@ -3,7 +3,6 @@ package net.werify.id.model.user
 import com.google.gson.annotations.SerializedName
 
 data class Profile (
-
     @SerializedName("first_name"    ) var firstName    : String? = null,
     @SerializedName("middle_name"   ) var middleName   : String? = null,
     @SerializedName("last_name"     ) var lastName     : String? = null,
@@ -21,5 +20,4 @@ data class Profile (
     @SerializedName("longitude"     ) var longitude    : String? = null,
     @SerializedName("last_online"   ) var lastOnline   : String? = null,
     @SerializedName("updated_at"    ) var updatedAt    : String? = null
-
 )

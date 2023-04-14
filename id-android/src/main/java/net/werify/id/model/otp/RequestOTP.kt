@@ -27,3 +27,17 @@ data class VerifyOTP(
         return "{\"type\":\"$type\",\"hash\":\"$hash\",\"otp\":\"$otp\",\"id\":\"$id\"}"
     }
 }
+
+data class RequestLoginOTP(
+    val hash: String,
+    val otp: String,
+    val id: String
+) : Request {
+
+    override fun toRequestBody() =
+        "$this".toRequestBody("application/json".toMediaType())
+
+    override fun toString(): String {
+        return "{\"hash\":\"$hash\",\"otp\":\"$otp\",\"id\":\"$id\"}"
+    }
+}

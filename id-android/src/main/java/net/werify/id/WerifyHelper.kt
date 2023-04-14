@@ -1,11 +1,7 @@
 package net.werify.id
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import androidx.core.content.ContextCompat
 import com.google.android.gms.vision.CameraSource
 import com.google.android.gms.vision.Detector
 import com.google.android.gms.vision.barcode.Barcode
@@ -23,9 +19,9 @@ import kotlinx.coroutines.newFixedThreadPoolContext
 import net.werify.id.common.ConnectionClassManager
 import net.werify.id.common.ConnectionClassManager.Companion.getInstance
 import net.werify.id.common.ConnectionQuality
-import net.werify.id.common.WConstants
 import net.werify.id.interfaces.ConnectionQualityChangeListener
 import net.werify.id.model.Request
+import net.werify.id.model.otp.RequestLoginOTP
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
 import net.werify.id.model.qr.QrResult
@@ -36,10 +32,8 @@ import net.werify.id.retrofit.NetworkModule
 import net.werify.id.retrofit.NetworkModule.initialize
 import net.werify.id.retrofit.NetworkModule.initializeWithDefaultClient
 import net.werify.id.retrofit.WerifyConfigure
-import net.werify.id.utils.Utils.getCache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import java.io.IOException
 import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
@@ -58,6 +52,7 @@ object WerifyHelper {
     @OptIn(DelicateCoroutinesApi::class)
     private val ioContext by lazy { newFixedThreadPoolContext(/*poolSize*/1, "IOContextWrapper") }
     private lateinit var cameraSourceRef: WeakReference<CameraSource>
+    private lateinit var barcodeDetector : BarcodeDetector
     fun <T> execute(dis: CoroutineDispatcher = Dispatchers.Main, r: Object) {
         CoroutineScope(dis).launch {
             flow<T> { r.invoke() }.catch {
@@ -88,7 +83,25 @@ object WerifyHelper {
         } else {
             initializeWithDefaultClient(context)
         }
-        initQrReader(context)
+
+        val barcodeDetector =
+            BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.ALL_FORMATS).build()
+
+        barcodeDetector.setProcessor(object : Detector.Processor<Barcode> {
+            override fun release() {
+                Log.e(TAG, "release")
+            }
+
+            override fun receiveDetections(detections: Detector.Detections<Barcode>) {
+                val barcodes = detections.detectedItems
+                if (barcodes.size() == 1) {
+                    val scannedValue = barcodes.valueAt(0).rawValue
+                    Log.e(TAG, "receiveDetections $scannedValue")
+                } else {
+                    Log.e(TAG, "receiveDetections $barcodes")
+                }
+            }
+        })
     }
 
 
@@ -162,7 +175,8 @@ object WerifyHelper {
         }
     }
 
-    fun loginOTP(request: Request, callback: RequestCallback<Any>) {
+    //id, hash, otp
+    fun loginOTP(request: RequestLoginOTP, callback: RequestCallback<Any>) {
         CoroutineScope(Dispatchers.Main).launch {
             NetworkModule.loginOTP(request)
                 .catch { callback.onError(it) }
@@ -428,58 +442,35 @@ object WerifyHelper {
     //endregion
 
 
-    private fun initQrReader(ctx: Context) {
-        val barcodeDetector =
-            BarcodeDetector.Builder(ctx).setBarcodeFormats(Barcode.ALL_FORMATS).build()
-
-        barcodeDetector.setProcessor(object : Detector.Processor<Barcode> {
-            override fun release() {
-                Log.e(TAG, "release")
-            }
-
-            override fun receiveDetections(detections: Detector.Detections<Barcode>) {
-                val barcodes = detections.detectedItems
-                if (barcodes.size() == 1) {
-                    val scannedValue = barcodes.valueAt(0).rawValue
-                    Log.e(TAG, "receiveDetections $scannedValue")
-                } else {
-                    Log.e(TAG, "receiveDetections $barcodes")
-                }
-            }
-
-        })
-        cameraSourceRef = WeakReference(
-            CameraSource.Builder(ctx, barcodeDetector)
-                .setRequestedPreviewSize(1920, 1080)
-                .setAutoFocusEnabled(true) //you should add this feature
-                .build()
-        )
+    fun initQrReader(ctx: Context , width: Int, height: Int) : Boolean{
+        if (::barcodeDetector.isInitialized) {
+            cameraSourceRef = WeakReference(
+                CameraSource.Builder(ctx, barcodeDetector)
+                    .setRequestedPreviewSize(width, height)
+                    .setAutoFocusEnabled(true) //you should add this feature
+                    .build()
+            )
+            return true
+        }
+        return false
     }
 
     /** HOW TO USED
      *  SurfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-     *      override fun surfaceCreated(holder: SurfaceHolder) {
+     *      override fun surfaceCreated(holder: SurfaceHolder) {}
+     *      override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int ) {
      *          try {
+     *                 //initialize QR Scanner
+     *                 WerifyHelper.initQrReader(Context, width, height)
      *                //Start preview after 1s delay
-     *                cameraSourceRef.get()?.start(holder)
+     *                WerifyHelper.getCameraSource()?.start(holder)
      *             } catch (e: IOException) {
      *                  e.printStackTrace()
      *             }
      *       }
-     *
-     *       override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int ) {
-     *          try {
-     *                //Start preview after 1s delay
-     *                cameraSourceRef.get()?.start(holder)
-     *             } catch (e: IOException) {
-     *                  e.printStackTrace()
-     *             }
-     *       }
-     *
      *       override fun surfaceDestroyed(holder: SurfaceHolder) {
-     *              cameraSourceRef.get()?.stop()
+     *               WerifyHelper.getCameraSource()?.stop()
      *        }
-     *
      */
     fun getCameraSource() = cameraSourceRef.get()
 }

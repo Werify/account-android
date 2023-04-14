@@ -10,15 +10,15 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        WerifyHelper.initialize(this , WerifyConfigure
-            .Builder("APP KEY")
-            .connectTimeout(60 , TimeUnit.SECONDS)
-            .readTimeout(60 , TimeUnit.SECONDS)
-            .writeTimeout(60 , TimeUnit.SECONDS)
-            //.setUrl("BASE URL FOR WERIFY ID")
-            //.setOKHttpClient(YOU CAN SET NEW INSTANCE OF OK HTTP CLIENT)
-            .build())
-
-//        WerifyHelper.enableLogging()
+        WerifyHelper.initialize(
+            this, WerifyConfigure
+                .Builder("APP KEY")
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                //.setUrl("BASE URL FOR WERIFY ID")
+                //.setOKHttpClient(YOU CAN SET NEW INSTANCE OF OK HTTP CLIENT)
+                .build()
+        )
     }
 }

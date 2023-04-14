@@ -11,6 +11,7 @@ import net.werify.id.RequestCallback
 import net.werify.id.WerifyHelper
 import net.werify.id.model.otp.OTPRequestResults
 import net.werify.id.model.otp.OTPVerifyResults
+import net.werify.id.model.otp.RequestLoginOTP
 import net.werify.id.model.otp.RequestOTP
 import net.werify.id.model.otp.VerifyOTP
 import net.werify.id.model.otp.toVerifyObject
@@ -220,7 +221,8 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
-        WerifyHelper.loginOTP(r,
+        WerifyHelper.loginOTP(
+            RequestLoginOTP("hash","opt","id"),
             object : RequestCallback<Any> {
                 override fun onError(throwable: Throwable) {
                     print("6-loginOTP: ${throwable.message}\n")

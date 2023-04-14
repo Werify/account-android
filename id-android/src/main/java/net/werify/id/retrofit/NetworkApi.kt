@@ -40,10 +40,9 @@ interface NetworkApi {
     @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/login")// params : identifier
     suspend fun login(@Body request: RequestBody): Response<Any>
-
     @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/otp")// params : id, hash, otp
-    suspend fun loginOTP(@Body request: Request): Response<Any>
+    suspend fun loginOTP(@Body request: RequestBody): Response<Any>
 
     @Headers("No-Authentication: true")
     @POST(value = "$SUFFIX/request-otp")// params : identifier
@@ -92,7 +91,7 @@ interface NetworkApi {
     @POST(value = "$SUFFIX/user/mobile-numbers")// params : mobile_number
     suspend fun addMobileNumber(@Body request: RequestBody): Response<Any>
 
-    @POST(value = "$SUFFIX/check-username")// params : NOT
+    @POST(value = "$SUFFIX/user/check-username")// params : NOT
     suspend fun checkUsername(): Response<Any>
     //endregion
 
@@ -104,7 +103,7 @@ interface NetworkApi {
 class RetrofitWerifyNetwork constructor(private val api: NetworkApi) : NetworkDataSource {
 
     override suspend fun login(request: Request) = api.login(request.toRequestBody())
-    override suspend fun loginOTP(request: Request) = api.loginOTP(request)
+    override suspend fun loginOTP(request: Request) = api.loginOTP(request.toRequestBody())
     override suspend fun requestOTP(request: Request) = api.requestOTP(request.toRequestBody())
     override suspend fun verifyOTP(request: Request) = api.verifyOTP(request.toRequestBody())
     override suspend fun getQRSession(): Response<QrResult> = api.getQRSession()

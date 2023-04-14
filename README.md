@@ -30,21 +30,6 @@ WerifyHelper.initialize(
         .setOKHttpClient(`YOU CAN SET NEW INSTANCE OF OK HTTP CLIENT`)
         .build()
 )
-```
-Then initialize it in onCreate() Method of application class :
-
-```kotlin
-WerifyHelper.initialize(
-    getApplicationContext(), WerifyConfigure
-        .Builder("APP KEY")
-        .connectTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .setUrl("BASE URL FOR WERIFY ID")
-        // Adding an Network Interceptor for Debugging purpose :
-        .setOKHttpClient(`YOU CAN SET NEW INSTANCE OF OK HTTP CLIENT`)
-        .build()
-)
 ``` 
 ### Now you can used this method in to your application.
 

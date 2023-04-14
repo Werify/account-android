@@ -42,6 +42,16 @@ class MainActivity : AppCompatActivity() {
             binding.content.apiResult.text = ""
             requestOTP(RequestOTP("mamad@mamad.com"))
         }
+
+
+//        WerifyHelper.setConnectionQualityChangeListener(object :ConnectionQualityChangeListener{
+//            override fun onChange(
+//                currentConnectionQuality: ConnectionQuality,
+//                currentBandwidth: Int
+//            ) {
+//                Log.e(net.werify.id.TAG , "ConnectionQuality ${currentConnectionQuality.name} : $currentBandwidth")
+//            }
+//        })
     }
 
     private fun checkSession(hash: String, id: String) {

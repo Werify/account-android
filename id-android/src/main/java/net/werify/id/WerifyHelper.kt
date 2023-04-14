@@ -16,10 +16,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
-import net.werify.id.common.ConnectionClassManager
-import net.werify.id.common.ConnectionClassManager.Companion.getInstance
-import net.werify.id.common.ConnectionQuality
-import net.werify.id.interfaces.ConnectionQualityChangeListener
 import net.werify.id.model.Request
 import net.werify.id.model.otp.RequestLoginOTP
 import net.werify.id.model.otp.OTPRequestResults
@@ -33,7 +29,6 @@ import net.werify.id.retrofit.NetworkModule.initialize
 import net.werify.id.retrofit.NetworkModule.initializeWithDefaultClient
 import net.werify.id.retrofit.WerifyConfigure
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
@@ -52,7 +47,7 @@ object WerifyHelper {
     @OptIn(DelicateCoroutinesApi::class)
     private val ioContext by lazy { newFixedThreadPoolContext(/*poolSize*/1, "IOContextWrapper") }
     private lateinit var cameraSourceRef: WeakReference<CameraSource>
-    private lateinit var barcodeDetector : BarcodeDetector
+    private lateinit var barcodeDetector: BarcodeDetector
     fun <T> execute(dis: CoroutineDispatcher = Dispatchers.Main, r: Object) {
         CoroutineScope(dis).launch {
             flow<T> { r.invoke() }.catch {
@@ -106,55 +101,15 @@ object WerifyHelper {
 
 
     /**
-     * Method to set connectionQualityChangeListener
-     *
-     * @param connectionChangeListener The connectionQualityChangeListener
-     */
-    fun setConnectionQualityChangeListener(connectionChangeListener: ConnectionQualityChangeListener) =
-        getInstance().setListener(connectionChangeListener)
-
-
-    /**
-     * Method to set connectionQualityChangeListener
-     */
-    fun removeConnectionQualityChangeListener() {
-        getInstance().removeListener()
-    }
-
-    /**
-     * Method to enable logging with tag
-     * @param level The level for logging
-     */
-    @JvmOverloads
-    fun enableLogging(level: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BASIC) =
-        NetworkModule.enableLogging(level)
-
-
-    /**
-     * Method to get currentBandwidth
-     *
-     * @return currentBandwidth
-     */
-    val currentBandwidth: Int
-        get() = getInstance().getCurrentBandwidth()
-
-    /**
-     * Method to get currentConnectionQuality
-     *
-     * @return currentConnectionQuality
-     */
-    val currentConnectionQuality: ConnectionQuality?
-        get() = getInstance().getCurrentConnectionQuality()
-
-    /**
      * Shuts WerifyNetworking down
      */
     fun shutDown() {
-        //Core.shutDown();
-        //evictAllBitmap();
-        getInstance().removeListener()
-        ConnectionClassManager.shutDown()
-        //ParseUtil.shutDown();
+        if (::barcodeDetector.isInitialized) {
+            barcodeDetector.release()
+        }
+        if (::cameraSourceRef.isInitialized) {
+            cameraSourceRef.get()?.release()
+        }
     }
 
 
@@ -442,7 +397,7 @@ object WerifyHelper {
     //endregion
 
 
-    fun initQrReader(ctx: Context , width: Int, height: Int) : Boolean{
+    fun initQrReader(ctx: Context, width: Int, height: Int): Boolean {
         if (::barcodeDetector.isInitialized) {
             cameraSourceRef = WeakReference(
                 CameraSource.Builder(ctx, barcodeDetector)

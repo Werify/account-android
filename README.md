@@ -34,8 +34,7 @@ WerifyHelper.initialize(
 
 ### Now you can used this method in to your application.
 
-#### login function
----
+### login function
 
 ```kotlin
  WerifyHelper.login(RequestOTP("identifier"),
@@ -45,8 +44,7 @@ WerifyHelper.initialize(
     })
 ```
 
-#### loginOTP function
----
+### loginOTP function
 
 ```kotlin
  WerifyHelper.loginOTP(
@@ -57,8 +55,7 @@ WerifyHelper.initialize(
     })
 ```
 
-#### requestOTP function then you received `OTPRequestResults` Object
----
+### requestOTP function then you received `OTPRequestResults` Object
 
 ```kotlin
   WerifyHelper.requestOTP(RequestOTP("identifier"),
@@ -70,8 +67,7 @@ WerifyHelper.initialize(
     })
 ```
 
-#### verifyOTP function you can `OTPRequestResults` Object to `VerifyOTP(type, hash, otp, id)'
----
+### verifyOTP function
 
 ```kotlin
 WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
@@ -84,8 +80,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getQRSession function
----
+### getQRSession function
 
 ```kotlin
  WerifyHelper.getQRSession(
@@ -97,8 +92,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getUserProfile function
----
+### getUserProfile function
 
 ```kotlin
   WerifyHelper.getUserProfile(
@@ -108,8 +102,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getUserNumbers function
----
+### getUserNumbers function
 
 ```kotlin
  WerifyHelper.getUserNumbers(
@@ -119,8 +112,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getFinancialInfo function
----
+### getFinancialInfo function
 
 ```kotlin
  WerifyHelper.getFinancialInfo(
@@ -130,8 +122,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getNewModalSession function
----
+### getNewModalSession function
 
 ```kotlin
  WerifyHelper.getNewModalSession(
@@ -141,8 +132,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### checkSession function
----
+### checkSession function
 
 ```kotlin
   WerifyHelper.checkSession(hash, id,
@@ -152,8 +142,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### claimModalSession function
----
+### claimModalSession function
 
 ```kotlin
   WerifyHelper.claimModalSession(hash, id,
@@ -163,8 +152,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### claimQRSession function
----
+### claimQRSession function
 
 ```kotlin
   WerifyHelper.claimQRSession(hash, id,
@@ -174,8 +162,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### claimQRSession function
----
+### claimQRSession function
 
 ```kotlin
   WerifyHelper.updateFinancialInfo(Profile("Ali", "ahmadi", "Ahmadi"),
@@ -185,8 +172,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### updateUserProfile function
----
+### updateUserProfile function
 
 ```kotlin
  WerifyHelper.updateUserProfile(profile,
@@ -196,8 +182,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### addMobileNumber function
----
+### addMobileNumber function
 
 ```kotlin
   WerifyHelper.addMobileNumber(
@@ -208,8 +193,7 @@ WerifyHelper.verifyOTP(VerifyOTP(type, hash, otp, id),
     })
 ```
 
-#### getCameraSource function for QR scanner
----
+### getCameraSource function for QR scanner
 
 ```kotlin
 // In your Activity Or Fragment

@@ -6,7 +6,7 @@ Id-Android SDK can be included in any Android application.
 
 Id-Android SDK supports Android 5.1+.
 
-## Using FId-Android SDK in your application
+## Using Id-Android SDK in your application
 
 Add this in your build.gradle
 
